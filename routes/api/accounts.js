@@ -31,56 +31,58 @@ router.post(
 
     const selectQuery = "SELECT * FROM Account WHERE Userid = ?";
     connection.query(selectQuery, [accountFields.Userid], (err, result) => {
-      //console.log(result);
-      if (result.length > 0) {
-        const selectQuery2 = "SELECT * FROM Account WHERE handle = ?";
+      console.log(result[0]);
+      if (result[0] === undefined) {
+        const selectQuery = "SELECT handle FROM Account";
+        connection.query(selectQuery, (err, result) => {
+          console.log(result.length);
+          if (result.handle === accountFields.handle) {
+            errors.handle = "Handle already taken";
+            res.status(400).json(errors);
+          } else {
+            const insertQuery =
+              "INSERT INTO Account (handle,phonenumber,Userid) VALUES (?,?,?)";
+            connection.query(
+              insertQuery,
+              [
+                accountFields.handle,
+                accountFields.phonenumber,
+                accountFields.Userid
+              ],
+              (err, rows) => {
+                console.log("insert");
+                //accountFields.Accountid = rows.insertedId;
+                res.json(accountFields);
+              }
+            );
+          }
+        });
+      } else {
+        const selectQuery2 = "SELECT * FROM Account WHERE Accountid = ?";
         connection.query(
           selectQuery2,
-          [accountFields.handle],
+          [accountFields.Accountid],
           (err, result) => {
-            if (result.length > 0) {
-              console.log(" if handle error1");
-              errors.handle = "Handle already taken";
-              res.status(400).json(errors);
-            } else {
-              const updatequery = "UPDATE Account SET ? WHERE Userid = ?";
+            console.log(result.length);
+            if (result.length != 0) {
+              const updateQuery = "UPDATE Account SET ? WHERE Userid = ?";
               console.log("else update");
               connection.query(
-                updatequery,
+                updateQuery,
                 [accountFields, accountFields.Userid],
                 (err, result) => {
                   res.json(accountFields);
                 }
               );
+            } else {
+              console.log(" if handle error1");
+              errors.handle = "Handle already taken";
+              res.status(400).json(errors);
             }
           }
         );
-      } else {
-        //check if handle exists
-        const selectQuery = "SELECT * FROM Account WHERE handle = ?";
-        connection.query(selectQuery, [accountFields.handle], (err, result) => {
-          if (result.length > 0) {
-            console.log("else handle error2");
-            errors.handle = "Handle already taken";
-            res.status(400).json(errors);
-          }
-          const insertQuery =
-            "INSERT INTO Account (handle,phonenumber,Userid) VALUES (?,?,?)";
-          connection.query(
-            insertQuery,
-            [
-              accountFields.handle,
-              accountFields.phonenumber,
-              accountFields.Userid
-            ],
-            (err, rows) => {
-              console.log("insert");
-              //accountFields.Accountid = rows.insertedId;
-              res.json(accountFields);
-            }
-          );
-        });
       }
+      //console.log(result[0].handle);
     });
   }
 );
@@ -270,6 +272,7 @@ router.delete(
     const selectQuery = "SELECT * FROM Account WHERE Userid = ?";
     const id = req.user[0].Userid;
     connection.query(selectQuery, [id], (err, result) => {
+      //console.log(result[]);
       const deleteQuery = "DELETE FROM Account WHERE Accountid = ?";
       connection.query(deleteQuery, [result[0].Accountid], (err, result) => {
         //console.log(result[0].Accountid);
