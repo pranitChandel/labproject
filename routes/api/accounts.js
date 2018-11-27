@@ -10,6 +10,38 @@ const validateAccountInput = require("../../validation/account");
 const validateCreditcardInput = require("../../validation/creditcard");
 const validateBidInput = require("../../validation/bid");
 
+//@route GET api/accounts/address
+//@desc  Get post
+//@access Public
+router.get(
+  "/address",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const selectQuery = "SELECT * FROM Account WHERE Userid = ?";
+    connection.query(selectQuery, [req.user[0].Userid], (err, result) => {
+      const selectQuery2 = "SELECT * FROM Address WHERE Accountid = ?";
+      connection.query(selectQuery2, [result[0].Accountid], (err, result) => {
+        res.json(result);
+      });
+    });
+  }
+);
+//@route GET api/accounts/cardinfo
+//@desc  Get cardinfo
+//@access Public
+router.get(
+  "/cardinfo",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const selectQuery = "SELECT * FROM Account WHERE Userid = ?";
+    connection.query(selectQuery, [req.user[0].Userid], (err, result) => {
+      const selectQuery2 = "SELECT * FROM Cardinfo WHERE Accountid = ?";
+      connection.query(selectQuery2, [result[0].Accountid], (err, result) => {
+        res.json(result);
+      });
+    });
+  }
+);
 //@route POST api/accounts
 //@desc  Create or edit User Account
 //@access Private
@@ -185,11 +217,11 @@ router.post(
   }
 );
 
-//@route POST api/accounts/bidding/:biddingproduct_id
+//@route POST api/accounts/bidding
 //@desc  Make a bid
 //@access Private
 router.post(
-  "/bidding/:biddingproduct_id",
+  "/bidding",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const { errors, isValid } = validateBidInput(req.body);
@@ -206,7 +238,7 @@ router.post(
       const newBid = {
         bidprice: req.body.bidprice,
         Accountid: result[0].Accountid,
-        BiddingProductid: req.params.biddingproduct_id
+        BiddingProductid: req.body.BiddingProductid
       };
       const selectQuery2 =
         "SELECT BiddingProductid FROM BiddedProduct WHERE BiddingProductid = ?";
@@ -239,6 +271,23 @@ router.post(
           }
         }
       );
+    });
+  }
+);
+
+//@route GET api/accounts/bidding
+//@desc  Get cardinfo
+//@access Private
+router.get(
+  "/bidding",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const selectQuery = "SELECT * FROM Account WHERE Userid = ?";
+    connection.query(selectQuery, [req.user[0].Userid], (err, result) => {
+      const selectQuery2 = "SELECT * FROM BiddedProduct WHERE Accountid = ?";
+      connection.query(selectQuery2, [result[0].Accountid], (err, result) => {
+        res.json(result);
+      });
     });
   }
 );
