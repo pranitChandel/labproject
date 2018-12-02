@@ -63,17 +63,20 @@ router.post(
 
     const selectQuery = "SELECT * FROM Account WHERE Userid = ?";
     connection.query(selectQuery, [accountFields.Userid], (err, result) => {
-      console.log(result[0]);
+      console.log(result);
       if (result[0] === undefined) {
-        const selectQuery = "SELECT handle FROM Account";
+        const selectQuery = "SELECT * FROM Account";
         connection.query(selectQuery, (err, result) => {
-          console.log(result.length);
-          if (result.handle === accountFields.handle) {
+          var flag = 0;
+          result.forEach(result => {
+            if (result.handle === accountFields.handle) flag++;
+          });
+          if (flag > 0) {
             errors.handle = "Handle already taken";
             res.status(400).json(errors);
           } else {
             const insertQuery =
-              "INSERT INTO Account (handle,phonenumber,Userid) VALUES (?,?,?)";
+              "INSERT INTO Account(handle,phonenumber,Userid) VALUES (?,?,?)";
             connection.query(
               insertQuery,
               [
@@ -81,24 +84,32 @@ router.post(
                 accountFields.phonenumber,
                 accountFields.Userid
               ],
-              (err, rows) => {
-                console.log("insert");
-                //accountFields.Accountid = rows.insertedId;
+              (err, result) => {
                 res.json(accountFields);
               }
             );
           }
         });
+        //console.log(result);
       } else {
-        const selectQuery2 = "SELECT * FROM Account WHERE Accountid = ?";
-        connection.query(
-          selectQuery2,
-          [accountFields.Accountid],
-          (err, result) => {
-            console.log(result.length);
-            if (result.length != 0) {
-              const updateQuery = "UPDATE Account SET ? WHERE Userid = ?";
+        const selectQuery = "SELECT handle from Account WHERE Accountid = ?";
+        connection.query(selectQuery, [result[0].Accountid], (err, result) => {
+          const selectQuery = "SELECT handle from Account";
+          connection.query(selectQuery, (err, result) => {
+            console.log(result);
+            var flag = 0;
+            result.forEach(result => {
+              if (result.handle === accountFields.handle) {
+                flag++;
+              }
+            });
+            if (flag > 0) {
+              errors.handle = "Handle already taken";
+              res.status(400).json(errors);
+            } else {
               console.log("else update");
+              const updateQuery = "UPDATE Account SET ? WHERE Userid = ?";
+              //console.log("else update");
               connection.query(
                 updateQuery,
                 [accountFields, accountFields.Userid],
@@ -106,15 +117,10 @@ router.post(
                   res.json(accountFields);
                 }
               );
-            } else {
-              console.log(" if handle error1");
-              errors.handle = "Handle already taken";
-              res.status(400).json(errors);
             }
-          }
-        );
+          });
+        });
       }
-      //console.log(result[0].handle);
     });
   }
 );
@@ -235,18 +241,21 @@ router.post(
 
     const selectQuery = "SELECT Accountid FROM Account WHERE Userid = ?";
     connection.query(selectQuery, [id], (err, result) => {
+      //console.log(result[0].Accountid);
       const newBid = {
         bidprice: req.body.bidprice,
         Accountid: result[0].Accountid,
         BiddingProductid: req.body.BiddingProductid
       };
+      console.log(newBid);
       const selectQuery2 =
         "SELECT BiddingProductid FROM BiddedProduct WHERE BiddingProductid = ?";
       connection.query(
         selectQuery2,
         [newBid.BiddingProductid],
         (err, result) => {
-          if (result.length > 0) {
+          console.log(result[0]);
+          if (result[0]) {
             const updateQuery =
               "UPDATE BiddedProduct SET ? WHERE BiddingProductid = ?";
             connection.query(
